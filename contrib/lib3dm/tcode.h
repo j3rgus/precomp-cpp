@@ -4,8 +4,13 @@
 #include <stdint.h>
 
 #define TCODE_SIZE			4
-#define TCODE_DATA_LEN_V1	4
-#define TCODE_DATA_LEN_V2	8
+#define TCODE_DATA_LEN_OLD	4
+#define TCODE_DATA_LEN_NEW	8
+#define TCODE_CRC_SIZE_OLD	2
+#define TCODE_CRC_SIZE_OLD	4
+
+#define TCODE_SUCCESS		0
+#define TCODE_ERROR			1
 
 typedef struct tcode {
 	unsigned int format : 1;
@@ -16,30 +21,27 @@ typedef struct tcode {
 	//unsigned int reserved : 2;
 } tcode_t;
 
-typedef struct tcode_short {
+typedef struct chunk_short {
     tcode_t typecode;
-	char data[TCODE_DATA_LEN_V2];
-} tcode_short_t;
+	char data[TCODE_DATA_LEN_NEW];
+} chunk_short_t;
 
-typedef struct tcode_big {
+typedef struct chunk_big {
 	tcode_t typecode;
-	union {
-		uint32_t sz_v1;
-		uint64_t sz_v2;
-	} size;
 	char *data;
+	union {
+		uint32_t sz_old;
+		uint64_t sz_new;
+	} size;
 	union {
 		uint16_t crc16;
 		uint32_t crc32;
 	} crc;
-} tcode_big_t;
+} chunk_big_t;
 
-/* Read TCODE chunk from buffer into tcode_*_t */
-int read_chunk_short(char *buff, tcode_short_t *tc_chunk);
-int read_chunk_big(FILE *buff, tcode_big_t *tc_chunk);
 
-/* Read TCODE chunk from FILE into tcode_*_t */
-int fread_chunk_short(FILE *f, tcode_short_t *tc_chunk);
-int fread_chunk_big(FILE *f, tcode_big_t *tc_chunk);
+
+int check_typecode();
+int check_crc();
 
 #endif
