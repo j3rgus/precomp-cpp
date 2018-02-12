@@ -500,6 +500,14 @@ static int parse_property_table(FILE *fd_tdm, version_t *ver)
 			/* Store bitmap header data of image into structure */
 			data = b_chunk.data;
 			memcpy(&bmhdr, data, sizeof(bitmap_header_t));
+
+			/* Check if read header size is same as an actual header size */
+			if (bmhdr.biSize != sizeof(bitmap_header_t)) {
+				lasterr = TDM_ERROR_INVALID_FILE;
+				free_bchunk(&b_chunk);
+				return TDM_FUNC_ERROR;
+			}
+
 			/* Shift data pointer behind bitmap header and next 9 bytes (why? what are those data?) */
 			data += sizeof(bitmap_header_t) + 9;
 
@@ -660,10 +668,6 @@ int parse_tdm_file(const char *filename)
 					ret = skip_chunk_fd(fd, &ver);
 				}
 				break;
-		}
-
-		if (do_quit) {
-			break;
 		}
 
 		if (ret != TDM_FUNC_SUCCESS) {
