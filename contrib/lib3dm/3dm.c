@@ -1,3 +1,17 @@
+/* Copyright 2018 Jergus Lysy
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +31,7 @@ static char *errstring[] = {"Success.",
 							"Invalid CRC.",
 							"Invalid file version." };
 
-int check_table_typecode(tcode_t *tcode)
+static int check_table_typecode(tcode_t *tcode)
 {
 	uint32_t value = TCODE_TABLE;
 	int ret = TDM_FUNC_ERROR;
@@ -138,37 +152,6 @@ void free_bchunk(chunk_big_t *b_chunk)
 		b_chunk->size = 0;
 		b_chunk->data = NULL;
 	}
-}
-
-int read_last_chunk(FILE *fd_tdm, uint32_t *size)
-{
-	tcode_t tcode;
-	uint64_t val;
-
-	if (fd_tdm == NULL) {
-		lasterr = TDM_ERROR_FUNC_INPUT;
-		return TDM_FUNC_ERROR;
-	}
-
-	if (read_tcode_fd(fd_tdm, &tcode, TDM_FILE_READ) != TDM_FUNC_SUCCESS) {
-		lasterr = TDM_ERROR_INVALID_TCODE;
-		return TDM_FUNC_ERROR;
-	}
-
-	if (tcode.value != TCODE_ENDOFFILE) {
-		return TDM_FUNC_ERROR;
-	}
-
-	fprintf(stderr, "%04x\n", tcode.value);
-
-	/* 4 bytes after typecode represent the file length */
-	if (read_tdm_file(fd_tdm, &val, 8) != TDM_FUNC_SUCCESS) {
-		return TDM_FUNC_ERROR;
-	}
-
-	fprintf(stderr, "%lu\n", val);
-
-	return TDM_FUNC_SUCCESS;
 }
 
 int read_tcode_fd(FILE *fd_tdm, tcode_t *tcode, int peek)
@@ -385,7 +368,7 @@ static int parse_property_table(FILE *fd_tdm, version_t *ver)
 	/* Parse property records. Consider at most 7 records */
 	for (size_t i = 0; i < 7; i++) {
 		/* Peek into typecode */
-		//fprintf(stderr, "%04x\n", tcode.value);
+		////fprintf(stderr, "%04x\n", tcode.value);
 
 		if (read_tcode_fd(fd_tdm, &tcode, TDM_FILE_PEEK) != TDM_FUNC_SUCCESS) {
 			lasterr = TDM_ERROR_INVALID_TCODE;
@@ -420,7 +403,7 @@ static int parse_property_table(FILE *fd_tdm, version_t *ver)
 			uint32_t crc32 = 0;
 			uint32_t calc_crc32 = 0;
 
-			fprintf(stderr, "Compressed preview image detected.\n");
+			//fprintf(stderr, "Compressed preview image detected.\n");
 			if (read_bchunk_fd(fd_tdm, ver, &b_chunk, TDM_FILE_READ) != TDM_FUNC_SUCCESS) {
 				return TDM_FUNC_ERROR;
 			}
@@ -449,9 +432,10 @@ static int parse_property_table(FILE *fd_tdm, version_t *ver)
 				return TDM_FUNC_ERROR;
 			}
 
+			/* Don't dump for testing purposes
 			FILE *fw = fopen("dump.bin", "wb");
 			fwrite(data, 1, c_image_size, fw);
-			fclose(fw);
+			fclose(fw); */
 			free_bchunk(&b_chunk);
 		}
 
@@ -504,7 +488,7 @@ int parse_tdm_file(const char *filename)
 		return TDM_FUNC_ERROR;
 	}
 
-	fprintf(stderr, "Header parsed.\n");
+	//fprintf(stderr, "Header parsed.\n");
 
 	/* The file must contain TCODE_COMMENTBLOCK as the first chunk */
 	/* All values are stored as little endian */
@@ -518,14 +502,14 @@ int parse_tdm_file(const char *filename)
 		return TDM_FUNC_ERROR;
 	}
 
-	fprintf(stderr, "Comment chunk parsed.\n");
+	//fprintf(stderr, "Comment chunk parsed.\n");
 
 	/* Skip the comment chunk */
 	if (skip_chunk_fd(fd, &ver) != TDM_FUNC_SUCCESS) {
 		return TDM_FUNC_ERROR;
 	}
 
-	fprintf(stderr, "Comment chunk skipped.\n");
+	//fprintf(stderr, "Comment chunk skipped.\n");
 
 	/* Read tables. Restrict possible number of tables to 100 */
 	for (size_t i = 0; i < 100; i++) {
@@ -539,13 +523,13 @@ int parse_tdm_file(const char *filename)
 			return TDM_FUNC_ERROR;
 		}
 
-		fprintf(stderr, "Peeked typecode %04x\n", tcode.value);
+		//fprintf(stderr, "Peeked typecode %04x\n", tcode.value);
 
 		/* Search only following tables */
 		switch (tcode.value) {
 			case TCODE_PROPERTIES_TABLE:
 				/* In property table interested in compressed preview image */
-				fprintf(stderr, "Property table found.\n");
+				//fprintf(stderr, "Property table found.\n");
 				ret = parse_property_table(fd, &ver);
 				break;
 			case TCODE_BITMAP_TABLE:
@@ -554,15 +538,16 @@ int parse_tdm_file(const char *filename)
 				if (skip_chunk_fd(fd, &ver) != TDM_FUNC_SUCCESS) {
 					return TDM_FUNC_ERROR;
 				}
-				fprintf(stderr, "Bitmap table found.\n");
+				//fprintf(stderr, "Bitmap table found.\n");
 				break;
 			case TCODE_ENDOFFILE:
 				ret = read_bchunk_fd(fd, &ver, &last_chunk, TDM_FILE_READ);
-				fprintf(stderr, "End of table found.\n");
+				//fprintf(stderr, "End of table found.\n");
 				do_quit = 1;
 				break;
 			default:
-				/* Not interested in other tables */
+				/* Not interested in other tables. */
+				/* This means that some files with legacy typecodes will not be parsed correctly */
 				/* If the typecode is not a table then quit */
 				if (check_table_typecode(&tcode) != TDM_FUNC_SUCCESS) {
 					lasterr = TDM_ERROR_INVALID_TCODE;

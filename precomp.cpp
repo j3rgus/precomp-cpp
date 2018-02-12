@@ -92,6 +92,7 @@ using namespace std;
 #include "contrib/giflib/precomp_gif.h"
 #include "contrib/packjpg/precomp_jpg.h"
 #include "contrib/packmp3/precomp_mp3.h"
+#include "contrib/lib3dm/precomp_3dm.h"
 #include "contrib/zlib/zlib.h"
 
 #define CHUNK 262144 // 256 KB buffersize

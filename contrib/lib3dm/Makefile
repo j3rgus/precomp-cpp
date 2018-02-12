@@ -1,5 +1,5 @@
-OBJECTS = crc32.o opennurbs_crc.o tcode.o 3dm.o
-CFLAGS  = -m64 -O3 -DUNIX -DBUILD_LIB -Wall -pedantic -funroll-loops -ffast-math -fomit-frame-pointer
+OBJECTS = opennurbs_crc.o 3dm.o
+CFLAGS  = -m64 -O3 -std=c99 -DUNIX -Wall -pedantic -funroll-loops -ffast-math -fomit-frame-pointer
 
 .PHONY: all
 all: $(OBJECTS)
@@ -9,4 +9,4 @@ clean:
 	rm -f *.o
 
 %.o: %.cpp
-	g++ -c $(CFLAGS) $<
+	gcc -c $(CFLAGS) $<

@@ -1,3 +1,17 @@
+/* Copyright 2018 Jergus Lysy
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
+
 #ifndef TDM_PARSER_LIB
 #define TDM_PARSER_LIB
 
@@ -99,12 +113,8 @@ int read_schunk_fd(FILE *fd_tdm, version_t *ver, chunk_short_t *s_chunk, int pee
 int read_bchunk_fd(FILE *fd_tdm, version_t *ver, chunk_big_t *b_chunk, int peek);
 void free_bchunk(chunk_big_t *b_chunk);
 
-/* Functions for checking data. */
-int check_chunk_crc(chunk_big_t *b_chunk);
-
-/* Main parsing functions */
+/* Main parsing function */
 int parse_tdm_file(const char *filename);
-int parse_tdm_file_crc(FILE *fd_tdm);
 
 ////////////////////////////////////////////
 
