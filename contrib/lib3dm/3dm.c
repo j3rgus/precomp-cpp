@@ -31,6 +31,12 @@ static char *errstring[] = {"Success.",
 							"Invalid CRC.",
 							"Invalid file version." };
 
+/*
+ * Function check_table_typecode
+ * Checks whether tcode is valid typecode for a table
+ * Takes typecode as an input
+ * Returns TDM_FUNC_SUCCESS if it is, TDM_FUNC_ERROR otherwise, and sets lasterr
+*/
 static int check_table_typecode(tcode_t *tcode)
 {
 	uint32_t value = TCODE_TABLE;
@@ -50,7 +56,13 @@ static int check_table_typecode(tcode_t *tcode)
 	return ret;
 }
 
-int check_property_record(tcode_t *tcode)
+/*
+ * Function check_property_record
+ * Checks whether tcode is a proper property record of property table
+ * Takes typecode as an input
+ * Returns TDM_FUNC_SUCCESS if it is, TDM_FUNC_ERROR otherwise, and sets lasterr
+*/
+static int check_property_record(tcode_t *tcode)
 {
 	int ret = TDM_FUNC_ERROR;
 
@@ -74,16 +86,30 @@ int check_property_record(tcode_t *tcode)
 	return ret;
 }
 
+/*
+ * Function get_version_size
+ * Get size of size data based on provided version
+*/
 static int get_version_size(version_t *ver)
 {
 	return (ver->v_maj > 4) ? TDM_FILE_VERSION_SIZE : TDM_FILE_VERSION_SIZE_OLD;
 }
 
+/*
+ * Function get_crc_size
+ * Get CRC size based on providen version
+*/
 static int get_crc_size(version_t *ver)
 {
 	return (ver->v_maj > 1) ? TDM_TCODE_CRC_SIZE : TDM_TCODE_CRC_SIZE_OLD;
 }
 
+/*
+ * Function read_tdm_file
+ * Reads num_bytes bytes from file describtor and stores them in mem
+ * Takes file descibtor, storage and number of bytes as input
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 static int read_tdm_file(FILE *fd_tdm, void *mem, size_t num_bytes)
 {
 	char *buf = (char *) mem;
@@ -103,6 +129,12 @@ static int read_tdm_file(FILE *fd_tdm, void *mem, size_t num_bytes)
 	return TDM_FUNC_SUCCESS;
 }
 
+/*
+ * Function skip_chunk_fd
+ * Skips chunk in file
+ * Takes file describtor and version as an input
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 static int skip_chunk_fd(FILE *fd_tdm, version_t *ver)
 {
 	tcode_t tcode;
@@ -135,16 +167,33 @@ static int skip_chunk_fd(FILE *fd_tdm, version_t *ver)
 	return TDM_FUNC_SUCCESS;
 }
 
+/*
+ * Function print_tdm_error
+ * Prints error messages based on lasterr and string in errstring
+ * Takes string as an input which will be printed as prefix
+ *
+*/
 void print_tdm_error(char *str)
 {
 	fprintf(stderr, "%s: %s\n", str, errstring[lasterr]);
 }
 
+/*
+ * Function clear_tdm_error
+ * Clears lasterr global variable
+ *
+*/
 void clear_tdm_error(void)
 {
 	lasterr = 0;
 }
 
+/*
+ * Function free_bchunk.
+ * Free the data inside big chunk
+ * Takes big chunk as an input
+ *
+*/
 void free_bchunk(chunk_big_t *b_chunk)
 {
 	if ((b_chunk != NULL) && (b_chunk->data != NULL)) {
@@ -154,6 +203,15 @@ void free_bchunk(chunk_big_t *b_chunk)
 	}
 }
 
+/*
+ * Function read_tcode_fd
+ * Parse and reads typecode.
+ * Takes file describtor and peek as input.
+ * Takes tcode as output for typecode
+ * If peek is TDM_FILE_PEEK then returns cursor in fd_tdm where it started to read,
+ * if peek is TDM_FILE_READ, then cursor is moved at the end of big chunk
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 int read_tcode_fd(FILE *fd_tdm, tcode_t *tcode, int peek)
 {
 	uint32_t tc = 0;
@@ -182,6 +240,15 @@ int read_tcode_fd(FILE *fd_tdm, tcode_t *tcode, int peek)
 	return TDM_FUNC_SUCCESS;
 }
 
+/*
+ * Function read_schunk_fd
+ * Parse and reads short chunk.
+ * Takes file describtor, version and peek as input.
+ * Takes s_chunk as output for short chunk
+ * If peek is TDM_FILE_PEEK then returns cursor in fd_tdm where it started to read,
+ * if peek is TDM_FILE_READ, then cursor is moved at the end of big chunk
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 int read_schunk_fd(FILE *fd_tdm, version_t *ver, chunk_short_t *s_chunk, int peek)
 {
 	int data_size = 0;
@@ -218,6 +285,15 @@ int read_schunk_fd(FILE *fd_tdm, version_t *ver, chunk_short_t *s_chunk, int pee
 	return TDM_FUNC_SUCCESS;
 }
 
+/*
+ * Function read_bchunk_fd
+ * Parse and reads big chunk.
+ * Takes file describtor, version and peek as input.
+ * Takes b_chunk as output for big chunk
+ * If peek is TDM_FILE_PEEK then returns cursor in fd_tdm where it started to read,
+ * if peek is TDM_FILE_READ, then cursor is moved at the end of big chunk
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 int read_bchunk_fd(FILE *fd_tdm, version_t *ver, chunk_big_t *b_chunk, int peek)
 {
 	int sz_size = 0;
@@ -286,6 +362,13 @@ int read_bchunk_fd(FILE *fd_tdm, version_t *ver, chunk_big_t *b_chunk, int peek)
 	return TDM_FUNC_SUCCESS;
 }
 
+/*
+ * Function parse_header
+ * Parser header of 3dm file.
+ * Takes file describtor as input and version as output
+ * Returns version in ver
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 static int parse_header(FILE *fd_tdm, version_t *ver)
 {
 	char buffer[TDM_FILE_HEADER_SIZE];
@@ -336,6 +419,12 @@ static int parse_header(FILE *fd_tdm, version_t *ver)
 	return TDM_FUNC_SUCCESS;
 }
 
+/*
+ * Function parse_property_table
+ * Function for parsing property table, searching for compressed data and dumping it
+ * Takes file describtor and version as input
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 static int parse_property_table(FILE *fd_tdm, version_t *ver)
 {
 	tcode_t tcode;
@@ -411,19 +500,27 @@ static int parse_property_table(FILE *fd_tdm, version_t *ver)
 			/* Store bitmap header data of image into structure */
 			data = b_chunk.data;
 			memcpy(&bmhdr, data, sizeof(bitmap_header_t));
+			/* Shift data pointer behind bitmap header and next 9 bytes (why? what are those data?) */
 			data += sizeof(bitmap_header_t) + 9;
+
+			/* Next data must be anonymous chunk (user chunk + CRC) */
 			memcpy(&tc_anon, data, TDM_TCODE_SIZE);
 			if (tc_anon != TCODE_ANONYMOUS_CHUNK) {
 				lasterr = TDM_ERROR_INVALID_TCODE;
 				free_bchunk(&b_chunk);
 				return TDM_FUNC_ERROR;
 			}
+
+			/* Shift data behind this chunk and read out data size */
 			data += TDM_TCODE_SIZE;
 			memcpy(&c_image_size, data, sz_size);
+
+			/* No read the data into memory */
 			data += sz_size;
 			c_image_size -= 4; // CRC at the end of data
 			memcpy(&crc32, &data[c_image_size], 4);
 
+			/* Check whether crc of data is correct */
 			calc_crc32 = ON_CRC32(0, c_image_size, data);
 
 			if (calc_crc32 != crc32) {
@@ -432,6 +529,7 @@ static int parse_property_table(FILE *fd_tdm, version_t *ver)
 				return TDM_FUNC_ERROR;
 			}
 
+			/* Dump the data or use for decompression */
 			/* Don't dump for testing purposes
 			FILE *fw = fopen("dump.bin", "wb");
 			fwrite(data, 1, c_image_size, fw);
@@ -444,6 +542,12 @@ static int parse_property_table(FILE *fd_tdm, version_t *ver)
 	return TDM_FUNC_SUCCESS;
 }
 
+/*
+ * Function parse_tdm_file
+ * Main function for parsing 3dm file
+ * Takes file name filename as input
+ * Returns TDM_FUNC_ERROR if fails, TDM_FUNC_SUCCESS otherwise, and sets lasterr
+*/
 int parse_tdm_file(const char *filename)
 {
 	FILE *fd = NULL;
@@ -558,12 +662,12 @@ int parse_tdm_file(const char *filename)
 				break;
 		}
 
-		if (ret != TDM_FUNC_SUCCESS) {
-			return TDM_FUNC_ERROR;
-		}
-
 		if (do_quit) {
 			break;
+		}
+
+		if (ret != TDM_FUNC_SUCCESS) {
+			return TDM_FUNC_ERROR;
 		}
 	}
 
